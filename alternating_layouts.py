@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
+import time
 import i3
 import re
 import subprocess
 import getopt
 import sys
 import os
+import logging
+
+from socket import error as SocketError
 
 
 def find_parent(window_id):
@@ -61,7 +65,7 @@ def print_help():
     print("")
 
 
-def main():
+def run():
     """
         Main function - listen for window focus
         changes and call set_layout when focus
@@ -90,9 +94,11 @@ def main():
 
     last_line = ""
     while True:
+        time.sleep(0.5)
         line = process.stdout.readline()
         if line == b'': #X is dead
-            break
+            logging.warn('X is dead, continue')
+            continue
         if line == last_line:
             continue
         if regex.match(line):
@@ -101,6 +107,15 @@ def main():
 
     process.kill()
     sys.exit()
+
+def main():
+    while True:
+        try:
+            run()
+        except SocketError:
+            logging.error('socket error')
+            time.sleep(0.5)
+            continue
 
 if __name__ == "__main__":
     main()
